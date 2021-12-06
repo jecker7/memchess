@@ -1,4 +1,4 @@
-import {ShortMove, Square} from "chess.js";
+import {Chess, ChessInstance, Move, ShortMove, Square} from "chess.js";
 import fetch from 'node-fetch'
 import * as d3 from "d3";
 import {DSVRowString} from "d3";
@@ -38,6 +38,12 @@ async function createRootNodes() {
     return sortNodeList(rootNodes)
 }
 
+function createPGNMoves(data: DSVRowString): Move[] {
+    const pgn = data["pgn"] as string;
+    const chess: ChessInstance = Chess();
+    chess.load_pgn(pgn);
+    return chess.moves({verbose: true});
+}
 
 function createShortMoves(data: DSVRowString): ShortMove[] {
     const movesAsSpaceSeperatedString = data["uci"] as string;
@@ -56,11 +62,11 @@ async function createOpeningList() {
     for (const prefix of ['a', 'b', 'c', 'd', 'e']) {
         const data = await d3.tsv(`https://raw.githubusercontent.com/niklasf/chess-openings/master/dist/${prefix}.tsv`);
         for (const elem of data) {
-            const moves = createShortMoves(elem)
+            const moves = createPGNMoves(elem)
             openingList.push({
                 text: elem["name"],
                 items: [],
-                id: stringify(moves),
+                id: moves.toString(),
                 moves: moves
             })
         }
